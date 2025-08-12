@@ -1,0 +1,82 @@
+Great idea, Captain!
+For this PDF-to-Markdown pipeline, we must (1) reliably detect the document’s semantic hierarchy across wildly different PDF structures, (2) design an extensible Python package that stays lightweight yet pluggable for future AI agents, and (3) ensure the output Markdown files are clean, well-named, and tree-structured so they slot straight into LLM contexts without post-processing headaches.
+
+Shall we dive into the detailed planning now? If so, I have a few focused questions to fine-tune the product vision!
+
+---
+
+Tell me the questions
+
+---
+
+GPT 5
+Absolutely, Captain! To sharpen the product vision, please choose from the options below (feel free to tweak or add your own). After each set, I note why a particular option is tagged “(Recommended)”. Let’s tackle one question at a time:
+
+Which features will be included as the main features of the product?
+A. Automatic table-of-contents extraction and hierarchy reconstruction (Recommended) – core to creating correct markdown tree
+B. Fallback heuristic section detection when formal TOC is missing (Recommended) – handles PDFs without metadata
+C. Bulk-processing CLI to convert multiple PDFs in one command
+D. Interactive visualization of detected hierarchy before export
+E. Plug-in system so users can swap out parsing engines (PyPDF2, pdfminer, etc.)
+
+Suggest 3-4 additional features that fit the product:
+A. Language-agnostic text extraction for multilingual PDFs (Recommended) – broadens user base
+B. Optional image extraction and embedding in markdown
+C. Auto-generation of YAML front-matter (title, author, page ranges) for each MD file (Recommended)
+D. Integration with cloud storage (S3, GCS) for input/output files
+
+Who is the main user of the product?
+A. AI/ML engineers preparing LLM training datasets (Recommended)
+B. Technical writers needing structured exports
+C. Researchers/academics organizing literature
+D. Digital archivists converting large PDF collections
+
+What is the main use case of the product?
+A. Breaking down technical books or manuals into chunked Markdown for LLM fine-tuning (Recommended)
+B. Converting corporate reports into sectioned docs for knowledge bases
+C. Preparing course materials for e-learning platforms
+D. Personal note-taking from ebooks
+
+What pain point does the product solve?
+A. Manual, error-prone splitting of PDFs into usable text chunks for AI workflows (Recommended)
+B. Loss of document structure during plain text extraction
+C. Time-consuming reformatting for knowledge management systems
+D. Compatibility issues between different PDF parsers
+
+What is the main goal of the user?
+A. Obtain clean, hierarchy-preserved Markdown files ready for LLM ingestion with minimal manual cleanup (Recommended)
+B. Quickly preview and edit document structure
+C. Automate large-scale PDF library conversion
+D. Integrate the converter into existing data pipelines
+
+What development strategy fits best?
+A. MVP first, then iterative feature add-ons (Recommended)
+B. Full-feature big-bang release
+C. Strict waterfall specification
+
+How will the product be used?
+A. Python package + CLI (Recommended)
+B. Web-based SaaS interface
+C. Desktop GUI
+D. Jupyter-notebook extension
+
+Please let me know:
+• Which options you select or wish to modify/remove.
+• Any extra details about your target market or plans for distribution (open source? commercial?).
+
+Two quick follow-up questions to refine market understanding:
+9. How important is seamless integration with popular AI data tools (e.g., LangChain, LlamaIndex)?
+10. Do you foresee enterprise users requiring security/compliance features (on-prem deployment, encrypted outputs)?
+
+---
+
+1. A, B, C should be included in core feature scope. 
+2. A - language agnostic is not needed. Language will be given in a separate config file so that the package doesn't have to guess the language. B - Most of the PDF parsing will be done by the API called DocumentParse by Upstage. This highly sophisticated API will not only parse the text but also tables and figures. C - YAML config is naturally the core component of the project. Some yaml will be user-defined and some will be created by the package itself. D is not needed. Not considering cloud option. 
+3. Main users are C - Researchers organizing literatures so main "source_type" categories will be lecture notes, text books, and academic paper. There can be other sources but these are the main types since the core target audience are the researchers. D - digital archivists are also the core target which overlaps with C. 
+4. A - is naturally the core feature, since our goal is to divide a large pdf text into small chunks but in semantic ontological hierarchy. 
+5. Main point is all of the given options A - optimizing pdf splitting for best LLM context engineering, B - loss of document structure during plain text extraction, C - Reformatting for knowledge management system, D - Compatibility issues between different PDF parsers. 
+6. Main goal of the user is A - Obtain clean, hierarchy preserved markdown files. 
+7. A - MVP first agile workflow is desired, but after having a good-enough OOP architecture that is scalable and flexible for later changes. 
+8. A - This will be a mono-repo pure python package. 
+9. Symless integration especially with LangChain is important. (LangGraph, etc)
+10. No security features or compliance complexities. Adding any unnecessary burden should be avoided. 
