@@ -1,0 +1,363 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# **System Prompt: LLM Agent Code & Communication Rules**
+
+## 1. Shell & Environment
+
+- **Operating System:** You are operating within a **Windows environment**.
+
+- **Shell:** **Only** use **Windows PowerShell** syntax for all terminal commands.
+
+- **Poetry Environment:** This project uses **Poetry** for dependency management. **ALWAYS** prefix Python commands with `poetry run` to ensure you're using the dedicated project virtual environment.
+
+- **Prohibited Shells:** **NEVER** use Windows CMD, WSL, bash, zsh, or any commands specific to Linux, macOS, or other Unix-like systems.
+
+- **Key Terminal Rules:**
+  - **ALWAYS** start Python commands with `poetry run` (e.g., `poetry run python script.py`, `poetry run pytest`)
+  - **AVOID** changing directories when running commands - use relative paths from project root instead
+  - **VERIFY** current directory with `Get-Location` or `pwd` before running location-dependent commands
+  - **USE** leading dot for relative paths in PowerShell (e.g., `.\src\scripts\` instead of `src\scripts\`)
+
+- **Key Differences (Windows PowerShell vs. Unix/Linux/macOS):**
+
+  - **Print Current Directory:**
+
+    - **(Correct - Windows PowerShell)**
+
+      PowerShell
+
+      ```
+      Get-Location
+      ```
+
+      or
+
+      ```
+      pwd
+      ```
+
+    - **(Incorrect - Unix/Linux/macOS Command Syntax)**
+
+      Bash
+
+      ```
+      pwd
+      ```
+
+  - **Path Separators:** Windows uses backslashes (`\`), while Unix-like systems use forward slashes (`/`). `pathlib` (see Section 3) helps manage this, but be mindful when displaying or constructing paths manually in text or documentation.
+
+    - **(Windows Example)**
+
+      ```
+      C:\Users\MyUser\Documents\project\data
+      ```
+
+    - **(Unix/Linux/macOS Example)**
+
+      ```
+      /home/myuser/documents/project/data
+      ```
+
+  - **Glob Patterns:** Wildcard behavior can differ slightly. Use patterns compatible with Windows PowerShell interpretation when suggesting file operations in the terminal. `pathlib`'s `glob` method is generally preferred within Python.
+
+    - **(Windows PowerShell - List Python files)**
+
+      PowerShell
+
+      ```
+      Get-ChildItem -Filter *.py
+      ```
+
+      or
+
+      ```
+      dir *.py
+      ```
+
+    - **(Unix/Linux/macOS - List Python files)**
+
+      Bash
+
+      ```
+      ls *.py
+      ```
+
+## 2. Python Version
+
+- Target **Python 3.11 and newer versions (3.11+)**.
+- If you introduce syntax specific to versions newer than 3.11 (e.g., features from 3.12+), explicitly document this requirement at the top of the relevant code block.
+
+## 3. File Paths & I/O
+
+- **Always** use the `pathlib` module for representing and manipulating file paths.
+  - Initialize paths like: `from pathlib import Path; my_path = Path('relative/path')` or `my_path = Path(r'C:\absolute\path')`.
+- **Avoid hard-coding paths directly in logic.** Prefer loading paths from configuration files (`config/`) or defining them as constants in a dedicated configuration module.
+- While `pathlib` handles OS-specific separators internally, use backslashes (`\`) when _displaying_ example Windows paths in documentation or comments.
+- **Do not** use `os.path.join` for path construction; rely on `pathlib`'s `/` operator (e.g., `data_dir / 'raw' / 'file.csv'`).
+
+## 4. Command Validation & Execution
+
+- **Before** suggesting or executing any terminal command that depends on the current location (e.g., running a script, accessing relative paths), **first verify the current directory** using:
+
+  PowerShell
+
+  ```
+  Get-Location
+  ```
+
+  or
+
+  ```
+  pwd
+  ```
+
+- **CRITICAL: Always use `poetry run` for Python commands** to ensure you're using the project's virtual environment.
+
+- **AVOID changing the current directory (`Set-Location` or `cd`)** within a sequence of commands. **ALWAYS** execute scripts or commands using relative paths from the assumed project root. This prevents navigation errors and maintains consistency.
+
+  - **(Good Example - Run script from project root)** Assume terminal is at `C:\project\` and script is at `C:\project\src\scripts\my_script.py`:
+
+    PowerShell
+
+    ```
+    poetry run python .\src\scripts\my_script.py --input .\data\input.csv
+    ```
+
+  - **(Bad Example - Changing directory)** This can lead to errors if the assumed starting directory is incorrect and violates our navigation best practices:
+
+    PowerShell
+
+    ```
+    Set-Location .\src\scripts
+    poetry run python .\my_script.py --input ..\..\data\input.csv
+    Set-Location ..\..
+    ```
+
+- **Running Tests:** Always use `poetry run pytest` and leverage the fact that `src/` is added to the pytest path configuration for easy imports:
+
+  PowerShell
+
+  ```
+  poetry run pytest tests/
+  poetry run pytest tests/specific_test.py
+  poetry run pytest tests/specific_test.py::test_function
+  ```
+
+- **Terminal Output Reading:** If you fail to read terminal output when running tests or other commands, **ask the user to read and provide the terminal output** since they can usually see the terminal output clearly.
+
+## 5. Dependencies & Packaging
+
+- **Dependency Management:** This project uses **Poetry**.
+
+- **Virtual Environment:** The Poetry virtual environment **must be used for all Python commands** by prefixing with `poetry run`.
+
+- **Required Command Pattern:**
+
+  - **ALWAYS** use `poetry run` prefix for Python commands:
+
+    ```
+    poetry run python script.py
+    poetry run pytest
+    poetry run python -m module
+    ```
+
+- **Prohibited Commands:**
+
+  - **NEVER** run Python commands without `poetry run` prefix
+  - **NEVER** directly edit `pyproject.toml` or `poetry.lock` files
+  - **NEVER** emit `pip install ...` commands
+  - **NEVER** create `requirements.txt` or `README.md` files unless explicitly instructed to do so
+
+- **Suggesting New Libraries:** If new dependencies are needed, list them clearly under a comment block like this (do not attempt to install them):
+
+  Python
+
+  ```
+  # Suggested Dependencies:
+  # - new_library_name
+  # - another_library==1.2.3
+  ```
+
+## 6. Preferred Libraries & Usage
+
+- **Core Data Handling:** `pandas`, `numpy`
+- **Paths:** `pathlib` (See Section 3)
+- **Data Models & Validation:** `pydantic`
+  - Use `pydantic.BaseModel` for defining data structures. Avoid native `@dataclasses` or `pydantic.dataclasses`.
+- **Testing:** `pytest` (See Section 13)
+- **Progress Bars:** Use `tqdm.tqdm` for any loop or process that might take a noticeable amount of time.
+- **Configuration:** Load settings from files in the `config/` directory (e.g., using Pydantic's `BaseSettings` or simple config parsers).
+
+## 7. Database & Storage
+
+- **Columnar Data (Relational-like):**
+
+  - Use **Apache Parquet** format.
+
+  - Store Parquet files within a **Hive-partitioned** folder structure (e.g., `...\year=YYYY\month=MM\day=DD\`).
+
+  - If the appropriate partitioning scheme is unclear, **prompt the user**:
+
+    > "Which Hive partition scheme (e.g., year/month/day, category/date) should I use for storing this Parquet data?"
+
+  - Use `pyarrow` library for reading/writing Parquet files, often via `pandas`.
+
+- **NoSQL / Unstructured Data:**
+  - Use **MongoDB** via the `pymongo` library.
+
+- **In-Memory Cache / Key-Value Store:**
+  - Use **Redis** via the `redis-py` library, especially for frequently accessed flags, intermediate results, or small datasets.
+
+## 8. Logging
+
+- **Console Logging:**
+
+  - Use the standard `logging` module configured to display logs.
+  - Generally, print logs at the `INFO` level (e.g., `logging.info(...)`) so key process steps are visible.
+  - **Inside long loops or frequently called functions,** use the `DEBUG` level (e.g., `logging.debug(...)`) to avoid flooding the console. Configure the logger to show `INFO` and above by default.
+
+- **File Logging:**
+
+  - Configure logging to write to files within the `log/` directory at the project root.
+  - Ensure log filenames include a timestamp to prevent overwriting, formatted like `YYYY-MM-DD_HHMMSS` (e.g., `log/2025-04-24_143000_data_processing.log`).
+
+## 9. Code Structure & Layout
+
+- **Project Layout:** Maintain a standard project structure:
+
+  - `src/<project_name>/`: Main source code for the installable package.
+  - `tests/`: Unit, integration, and other automated tests.
+  - `config/`: Configuration files (e.g., YAML, INI, Python settings modules).
+  - `log/`: Directory where log files are written (should typically be in `.gitignore`).
+  - `docs/`: Project documentation (e.g., Sphinx docs, Markdown files).
+  - `notebooks/`: Jupyter notebooks for experimentation, Exploratory Data Analysis (EDA), and demonstrations. These are generally not part of the core application logic.
+  - `scripts/`: Standalone scripts for utility tasks, automation, or experiments. Consider a sub-directory like `scripts/experimental/` or `scripts/sandbox/` for temporary or exploratory scripts.
+
+- **Packages:** Place a top-level `__init__.py` file in each directory intended to be a Python package (including `src/<project_name>` and its sub-packages). This file can be empty.
+
+- **Experimentation/Sandbox:**
+
+  - Use the `notebooks/` directory for interactive data analysis and experimentation, typically using Jupyter notebooks (`.ipynb`).
+  - Use the `scripts/experimental/` (or similar) directory for temporary Python scripts (`.py`) used for testing ideas or one-off tasks.
+  - These experimental areas are often excluded from strict code quality checks or production deployment pipelines and might be added to `.gitignore` depending on the project's policy.
+
+## 10. OOP & Design Principles
+
+- **Single Responsibility Principle (SRP):** Each class or function should have one primary responsibility.
+- **Don't Repeat Yourself (DRY):** Extract reusable logic into helper functions, private methods (`_method_name`), or utility modules.
+- **Composition over Inheritance:** Favor using instances of other classes (composition) rather than inheriting from them, unless there is a clear and logical "is-a" relationship that warrants inheritance.
+- **Encapsulation:** Use private attributes (conventionally prefixed with an underscore, e.g., `self._internal_data`) to hide internal implementation details. Expose functionality through public methods.
+- **Abstraction:** Clearly define and document the public interface (methods and properties) of classes. Hide complex implementation details behind this interface.
+
+## 11. Documentation & Comments
+
+- **File Header Comment:** Start each `.py` file with a header comment explaining its role and content.
+
+  Python
+
+  ```
+  # ------------------------------------------------------------
+  # Purpose: [Brief, max 3 sentences description of the file's main role and responsibility]
+  # Contents: [Bulleted or numbered list of key classes/functions defined in this file]
+  #           - ClassName1: Does X.
+  #           - function_name_1: Performs Y.
+  # Mod Date: [Optional: YYYY-MM-DD - Last significant update, if maintained manually]
+  # ------------------------------------------------------------
+  ```
+
+- **Docstrings:** Provide clear and concise docstrings for all modules, classes, functions, and methods using a standard format (e.g., Google style, NumPy style).
+
+  - **Module:** Brief description of the module's purpose and any major external dependencies it coordinates.
+  - **Class:** Describe the class's overall role, intention, key responsibilities, public attributes/methods, and provide a simple usage example if helpful.
+  - **Function/Method:** Explain the purpose, arguments (`Args:`), return value (`Returns:`), any exceptions raised (`Raises:`), and side effects. Include type hints in the function signature.
+
+- **Inline Comments:**
+
+  - Use comments to explain the _why_ behind a piece of code (e.g., reasoning for a specific algorithm choice, trade-offs made) rather than simply restating _what_ the code does.
+
+  - For complex logic broken into sequential parts, use numbered comments:
+
+    Python
+
+    ```
+    # Step 1: Load raw data from source
+    raw_data = load_data(...)
+
+    # Step 2: Clean and preprocess the data
+    cleaned_data = preprocess(raw_data, ...)
+
+    # Step 3: Perform calculations
+    results = calculate_metrics(cleaned_data, ...)
+
+    # Step 4: Save results
+    save_results(results, ...)
+    ```
+
+## 12. Testing & Validation
+
+- **Test-Driven Development (TDD) Philosophy:**
+
+  - **Start Simple:** Begin with the absolute simplest possible test (e.g., "Can we import this module?") rather than comprehensive test suites.
+  - **Red-Green-Refactor Cycle:** Write one failing test, make it pass with minimal code, refactor, repeat. Do not try to test all edge cases upfront.
+  - **Incremental Complexity:** Add complexity gradually, one test at a time. Each test should drive the next small piece of functionality.
+  - **Core Logic First:** Focus on essential functionality before handling edge cases, error conditions, or optimization scenarios.
+  - **Embrace Development Errors:** Use errors and exceptions as debugging information during development rather than trying to prevent all possible failures upfront.
+  - **Config-Driven Testing:** Use existing configuration files (like `systems.yaml` with mock mode) instead of complex environment variable logic during initial TDD cycles.
+  - **Simplification Principle:** Remove unnecessary complexity (extensive try-catch blocks, environment variable dependencies) when starting TDD. Add them back incrementally as tests demand them.
+
+- **Test Execution:**
+
+  - **ALWAYS** use `poetry run pytest` to run tests
+  - **Project Configuration:** The `src/` directory is added to the pytest path in `pyproject.toml`, enabling direct imports from source modules in tests
+  - **Import Pattern:** Tests can import directly from source modules: `from sysmacro4.domain import TimeSeriesDataset`
+
+- **Test File Location & Naming:**
+
+  - Place test files in the `tests/` directory.
+  - Mirror the structure of your `src/` directory within `tests/`.
+  - Name test files starting with `test_` (e.g., `tests/test_module_name.py`).
+  - Name test functions starting with `test_` (e.g., `def test_feature_x():`).
+
+- **Logging in Tests:**
+
+  - Use `pytest`'s `caplog` fixture to capture log messages emitted during a test.
+  - Write assertions against the captured logs (`caplog.records`, `caplog.text`) to verify that important `INFO` or `DEBUG` messages were logged as expected during test execution. This confirms logging configuration and important operational steps.
+
+- **Terminal Output Debugging:**
+
+  - If test output cannot be read from terminal, **ask the user to provide the terminal output** since they can usually see the results clearly.
+
+## 13. Documentation and Diagrams
+
+- **Markdown Formatting:**
+  - Always use `-` for bullet points instead of `*` in all markdown documentation.
+  - Respect numbered lists (1., 2., 3., etc.) in original documents and maintain them rather than converting to bullet points.
+  - Use only 1 space after each bullet point (`-`), not multiple spaces (e.g., `- Item` not `-   Item`).
+  - Maintain 4 spaces (not tabs) for indenting nested list items.
+  - Use proper heading levels with `#` marks (e.g., `# Heading 1`, `## Heading 2`).
+  - Use code blocks with triple backticks and specify the language (e.g., ```python).
+  - Indent nested content consistently using 2 or 4 spaces.
+  - **CAVEAT: Due to recurring errors, always double-check markdown list formatting (bullet spacing and indentation for nesting) before finalizing documents. Refer to these rules frequently.**
+
+- **Mermaid Diagrams:**
+  - When including Mermaid diagrams in documentation, ensure nodes with text containing special characters (parentheses, brackets, etc.) are properly quoted using double quotes:
+    - **(Correct)** `nodeName["Text with (special) characters"]`
+    - **(Incorrect)** `nodeName[Text with (special) characters]`
+  - For flowcharts, use the `flowchart` directive rather than the older `graph` syntax.
+  - Use proper subgraph syntax: `subgraph name["Display Text"]` with quotes around display text containing spaces.
+  - In links/edges, keep label text simple or use quotes for complex labels.
+
+## 14. Embrace LLM-Assisted Development & Documentation Workflow
+
+- **Human-in-the-Loop (HITL)**: Actively use this LLM agent in a pair-programming context. Discuss requirements, design choices, and potential issues to leverage AI capabilities while maintaining human oversight.
+
+- **Living Documentation**: Treat planning documents and code documentation (`READMEs`, docstrings, file headers) as living artifacts that evolve through ongoing discussion and LLM assistance, rather than static documents created once and rarely updated.
+
+- **Mermaid for Visualization**: Use Mermaid diagrams extensively within markdown documents (`docs/`, `READMEs`) as the **authoritative visual summary** of the system architecture ("as-is"). These diagrams should provide clear visual representation of components, relationships, and data flows.
+
+- **Blueprint for Evolution**: When planning new features or refactoring, first collaborate with the LLM to generate a "to-be" Mermaid diagram and descriptive text, acting as a clear blueprint before implementation begins. This ensures alignment and allows the LLM to better understand context for future code generation or modification tasks.
+
+- **Consistency**: Maintain consistency between the code structure, documentation, and Mermaid diagrams through this iterative refinement process. When changes are made to one, update the others accordingly to ensure they remain synchronized.
