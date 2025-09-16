@@ -228,3 +228,7 @@ pip-selfcheck.json
 
 .cursorignore
 .cursorindexingignore
+
+data/
+outputs/
+.specstory/
